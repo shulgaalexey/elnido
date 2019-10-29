@@ -1,10 +1,8 @@
-# Router
+# Configuring router
 
-## Configuring router
+## Huawei HG659 with Vodafone firmware
 
-### Huawei HG659 with Vodafone firmware
-
-Configure phishing protection
+### Configure phishing protection
 
 Set up Cisco OpenDNS as DNS, which allows to use its phishing protection
 
@@ -21,7 +19,7 @@ Set up Cisco OpenDNS as DNS, which allows to use its phishing protection
 Refer to OpenDNS guide for more details: https://support.opendns.com/hc/en-us/articles/228006047-Generalized-Router-Configuration-Instructions
 
 
-Configure Parental control
+### Configure Parental control
 
 1. Login as admin in http://192.168.1.1/html/advance.html#parent_control
 
