@@ -27,3 +27,19 @@ Refer to OpenDNS guide for more details: https://support.opendns.com/hc/en-us/ar
  - Give a rule a name
  - Assign allowed time window
  - Check affected devices
+
+### Configure OpenDNS Home
+
+1. Navigate to https://www.opendns.com/home-internet-security/
+
+2. Create a free account
+
+3. Install OpenDNS Dynamic IP updater client (which syncs your dynamic router IP with your OpenDNS account)
+https://support.opendns.com/hc/en-us/articles/227987867
+
+4. Add your home network to your account in settings GUI
+https://dashboard.opendns.com/settings/
+
+5. Enable Stats and Logs in the settings of your account
+
+6. Enable Web Content Filterinfg in the settings of your account
