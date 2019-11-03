@@ -1,5 +1,6 @@
 import json
 import time
+import subprocess
 from slackclient import SlackClient
 
 # Slack API Token
@@ -26,10 +27,34 @@ while True:
             break
 
         txt = msg['text']
+        print txt
         if txt.lower() == 'ping':
-            print txt
             print msg
             slack_client.api_call("chat.postMessage",channel=msg['channel'],
                 text='pong', as_user=True)
+        elif txt == 'status':
+            ret = subprocess.Popen(['route', '-n'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            stdout, stderr = ret.communicate()
+            slack_client.api_call("chat.postMessage",channel=msg['channel'],
+                text='```%s```' % stdout, as_user=True)
+            if stderr:
+                slack_client.api_call("chat.postMessage",channel=msg['channel'],
+                    text='ERROR\n```%s```' % stderr, as_user=True)
+        if txt.lower() == 'child inet on':
+            slack_client.api_call("chat.postMessage",channel=msg['channel'],
+                text='turning on child inet....', as_user=True)
+            time.sleep(1)
+            slack_client.api_call("chat.postMessage",channel=msg['channel'],
+                text='turning on child inet....DONE', as_user=True)
+        if txt.lower() == 'child inet off':
+            slack_client.api_call("chat.postMessage",channel=msg['channel'],
+                text='turning off child inet....', as_user=True)
+            time.sleep(1)
+            slack_client.api_call("chat.postMessage",channel=msg['channel'],
+                text='turning off child inet....DONE', as_user=True)
+        elif txt.lower() == 'help':
+            slack_client.api_call("chat.postMessage",channel=msg['channel'],
+                text='Available commands:\n\tping\n\tstatus\n\tchild inet on\n\tchild inet off\n\thelp',
+                as_user=True)
 
     time.sleep(1)
