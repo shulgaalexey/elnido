@@ -51,3 +51,15 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
 192.168.1.0     0.0.0.0         255.255.255.0   U         0 0          0 eth0
 
 https://www.cyberciti.biz/tips/how-do-i-drop-or-block-attackers-ip-with-null-routes.html
+
+
+
+### Slack Bot
+
+- Install virtualenv
+- Install slackclient==1.3.2
+- Run slackbot.py in virtualenv
+- Type `ping` in slack
+
+https://github.com/vitorverasm/slackbot-iot
+
