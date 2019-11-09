@@ -1,0 +1,4 @@
+{
+    "slack_api_token": "blah-blah",
+    "allowed_user_names": ["user1", "user2"]
+}
