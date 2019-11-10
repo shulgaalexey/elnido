@@ -117,8 +117,14 @@ try:
                 if msg['user'] not in allowed_user_ids:
                     continue
                 process_message(slack_client, msg)
+        except slackclient.server.SlackConnectionError as sce:
+            _log('Slack connect socket error, reconnect in 5 sec, reason: "%s"' % sce)
+            time.sleep(5)
+            connect()
+            post_message(slack_client, 'Reconnect after exception\n```%s```' % sce, CUR_CHANNEL)
+            time.sleep(2)
         except socket.error as se:
-            _log('Socket error, reconnect in 5 sec: %s' % se)
+            _log('Socket error, reconnect in 5 sec, reason: "%s"' % se)
             time.sleep(5)
             connect()
             post_message(slack_client, 'Reconnect after exception\n```%s```' % se, CUR_CHANNEL)
