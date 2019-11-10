@@ -63,3 +63,12 @@ https://www.cyberciti.biz/tips/how-do-i-drop-or-block-attackers-ip-with-null-rou
 
 https://github.com/vitorverasm/slackbot-iot
 
+### Config
+
+```
+{
+    "slack_api_token": "xxxx-111111111111-222222222222-YYYYYYYYYYYYYYYYYYYYYYYY",
+    "allowed_user_names": ["user1", "user2"],
+    "r7_log_token": "11111111-2222-3333-4444-555555555555",
+}
+```
