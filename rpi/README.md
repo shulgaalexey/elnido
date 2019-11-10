@@ -57,8 +57,17 @@ https://www.cyberciti.biz/tips/how-do-i-drop-or-block-attackers-ip-with-null-rou
 ### Slack Bot
 
 - Install virtualenv
-- Install slackclient==1.3.2
+
+```virtualenv .venv```
+
+- Install pip dependencies
+
+```pip install -r requirements.pip```
+
 - Run slackbot.py in virtualenv
+
+```python ./slackbot.py```
+
 - Type `ping` in slack
 
 https://github.com/vitorverasm/slackbot-iot
