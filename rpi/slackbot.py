@@ -3,11 +3,14 @@ import time
 import subprocess
 import datetime
 import socket
+#from r7insight import R7InsightHandler
+#import logging
 from slackclient import SlackClient
 
 SLACK_API_TOKEN = None
 ALLOWED_USER_NAMES = None
 CUR_CHANNEL = None
+R7_LOG_TOKEN = None
 
 
 def _get_cur_time():
@@ -16,17 +19,20 @@ def _get_cur_time():
 
 def _log(msg):
     print '%s: %s' % (_get_cur_time(),  msg)
+    cmd = 'echo %s %s | nc eu.data.logs.insight.rapid7.com 10000' % (R7_LOG_TOKEN, msg)
+    subprocess.Popen(cmd, shell=True)
 
 
 def load_config():
     global SLACK_API_TOKEN
     global ALLOWED_USER_NAMES
+    global R7_LOG_TOKEN
     _log('Load config from config.json file')
-    with open('config.json') as config_file:
+    with open('/home/pi/.bot.config.json') as config_file:
         config_loaded = json.load(config_file)
         SLACK_API_TOKEN = config_loaded['slack_api_token']
         ALLOWED_USER_NAMES = config_loaded['allowed_user_names']
-        _log('Successfully loaded config')
+        R7_LOG_TOKEN = config_loaded['r7_log_token']
 
 
 def connect():
@@ -90,9 +96,17 @@ def process_message(slack_client, msg):
                 channel)
 
 
+
 slack_client = None
 try:
     load_config()
+
+    #LOG = logging.getLogger('r7insight')
+    #LOG.setLevel(logging.INFO)
+    #LOG_HANDLER = R7InsightHandler(R7_LOG_TOKEN, 'eu')
+    #LOG.addHandler(LOG_HANDLER)
+
+
     slack_client = connect()
     allowed_user_ids = get_allowed_user_ids(slack_client)
     while True:
