@@ -42,10 +42,10 @@ def get_allowed_user_ids(slack_client):
     user_list = slack_client.api_call("users.list")
     allowed_user_ids = []
     for user in user_list.get('members'):
-        _log('user: ' +  user.get('name') + ' with id: ' + user.get('id'))
+        _log('user: %s with id: %s' %  (user.get('name'), user.get('id')))
         if user.get('name') in ALLOWED_USER_NAMES:
             allowed_user_ids.append(user.get('id'))
-            _log('    Added allowed user id: ' + user.get('id'))
+            _log('    Added allowed user id: %s' % user.get('id'))
     return allowed_user_ids
 
 
@@ -90,6 +90,7 @@ def process_message(slack_client, msg):
                 channel)
 
 
+slack_client = None
 try:
     load_config()
     slack_client = connect()
@@ -103,11 +104,15 @@ try:
                     continue
                 process_message(slack_client, msg)
         except socket.error as se:
-            _log('Socket error, reconnect in 5 sec: ' + se)
-            time.sleep(1)
+            _log('Socket error, reconnect in 5 sec: %s' % se)
+            time.sleep(5)
             connect()
+            post_message(slack_client, 'Reconnect after exception\n```%s```' % se, CUR_CHANNEL)
+            time.sleep(2)
         except IOError as ex:
             _log('Cannot fetch messages: ' + ex)
+            post_message(slack_client, 'Exception\n```%s```' % ex, CUR_CHANNEL)
+            time.sleep(2)
         time.sleep(1)
 except KeyboardInterrupt:
     _log('Terminated by operator. Sending farewell message to channel %s...' % CUR_CHANNEL)
