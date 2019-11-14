@@ -18,9 +18,12 @@ def _get_cur_time():
 
 
 def _log(msg):
-    print '%s: %s' % (_get_cur_time(),  msg)
-    cmd = 'echo %s %s | nc eu.data.logs.insight.rapid7.com 10000' % (R7_LOG_TOKEN, msg)
-    subprocess.Popen(cmd, shell=True)
+    timed_msg = '%s: %s' % (_get_cur_time(),  msg)
+    print timed_msg
+    echo_file_cmd = 'echo "%s" >> /home/pi/slackbot.log' % timed_msg
+    subprocess.Popen(echo_file_cmd, shell=True)
+    log_cmd = 'echo %s %s | nc eu.data.logs.insight.rapid7.com 10000' % (R7_LOG_TOKEN, msg)
+    subprocess.Popen(log_cmd, shell=True)
 
 
 def load_config():
