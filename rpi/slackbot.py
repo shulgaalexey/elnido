@@ -130,15 +130,21 @@ try:
         except SlackConnectionError as sce:
             _log('Slack connect socket error, reconnect in 5 sec, reason: "%s"' % sce)
             time.sleep(5)
-            connect()
-            post_message(slack_client, 'Reconnect after exception\n```%s```' % sce, CUR_CHANNEL)
-            time.sleep(2)
+            slack_client = connect()
+            if slack_client:
+                post_message(slack_client, 'Reconnect after exception\n```%s```' % sce, CUR_CHANNEL)
+                time.sleep(2)
+            else:
+                _log('Unable to connect to slack')
         except socket.error as se:
             _log('Socket error, reconnect in 5 sec, reason: "%s"' % se)
             time.sleep(5)
-            connect()
-            post_message(slack_client, 'Reconnect after exception\n```%s```' % se, CUR_CHANNEL)
-            time.sleep(2)
+            slack_client = connect()
+            if slack_client:
+                post_message(slack_client, 'Reconnect after exception\n```%s```' % se, CUR_CHANNEL)
+                time.sleep(2)
+            else:
+                _log('Unable to connect to slack')
         except IOError as ex:
             _log('Cannot fetch messages: ' + ex)
             post_message(slack_client, 'Exception\n```%s```' % ex, CUR_CHANNEL)
