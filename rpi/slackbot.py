@@ -6,6 +6,8 @@ import socket
 #from r7insight import R7InsightHandler
 #import logging
 from slackclient import SlackClient
+from slackclient.server import SlackConnectionError
+
 
 SLACK_API_TOKEN = None
 ALLOWED_USER_NAMES = None
@@ -101,6 +103,7 @@ def process_message(slack_client, msg):
 
 
 slack_client = None
+iter = 0
 try:
     load_config()
 
@@ -113,6 +116,10 @@ try:
     slack_client = connect()
     allowed_user_ids = get_allowed_user_ids(slack_client)
     while True:
+        iter += 1
+        if iter > (5 * 60):
+            iter = 0
+            _log("Heartbeat")
         try:
             for msg in slack_client.rtm_read():
                 if msg['type'] != 'message'  and not "subtype" in msg:
