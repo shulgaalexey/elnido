@@ -87,18 +87,24 @@ def process_message(slack_client, msg):
         post_message(slack_client, '```%s```' % stdout, channel)
         if stderr:
             post_message(slack_client, 'ERROR\n```%s```' % stderr, channel)
-    if txt.lower() == 'child inet on':
+    elif txt.lower() == 'child inet on':
         post_message(slack_client, 'turning on child inet....', channel)
         time.sleep(1)
         post_message(slack_client, 'turning on child inet....DONE', channel)
-    if txt.lower() == 'child inet off':
+    elif txt.lower() == 'child inet off':
         post_message(slack_client, 'turning off child inet....', channel)
         time.sleep(1)
         post_message(slack_client, 'turning off child inet....DONE', channel)
     elif txt.lower() == 'help':
         post_message(slack_client,
-                'Available commands:\n\tping\n\tstatus\n\tchild inet on\n\tchild inet off\n\thelp',
+                'Available commands:\n\tping\n\tstatus\n\tchild inet on\n\tchild inet off\n\tstop\n\thelp',
                 channel)
+    elif txt.lower() == 'stop':
+        _log('Stop command')
+        exit(0)
+    else:
+        _log(msg)
+        post_message(slack_client, '%s? U mad?' % msg, channel)
 
 
 
@@ -128,8 +134,8 @@ try:
                     continue
                 process_message(slack_client, msg)
         except SlackConnectionError as sce:
-            _log('Slack connect socket error, reconnect in 5 sec, reason: "%s"' % sce)
-            time.sleep(5)
+            _log('Slack connect socket error, reconnect in 15 sec, reason: "%s"' % sce)
+            time.sleep(15)
             slack_client = connect()
             if slack_client:
                 post_message(slack_client, 'Reconnect after exception\n```%s```' % sce, CUR_CHANNEL)
@@ -137,8 +143,8 @@ try:
             else:
                 _log('Unable to connect to slack')
         except socket.error as se:
-            _log('Socket error, reconnect in 5 sec, reason: "%s"' % se)
-            time.sleep(5)
+            _log('Socket error, reconnect in 15 sec, reason: "%s"' % se)
+            time.sleep(15)
             slack_client = connect()
             if slack_client:
                 post_message(slack_client, 'Reconnect after exception\n```%s```' % se, CUR_CHANNEL)
