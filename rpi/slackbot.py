@@ -6,6 +6,8 @@ import socket
 #from r7insight import R7InsightHandler
 #import logging
 from slackclient import SlackClient
+from slackclient.server import SlackConnectionError
+
 
 SLACK_API_TOKEN = None
 ALLOWED_USER_NAMES = None
@@ -18,9 +20,12 @@ def _get_cur_time():
 
 
 def _log(msg):
-    print '%s: %s' % (_get_cur_time(),  msg)
-    cmd = 'echo %s %s | nc eu.data.logs.insight.rapid7.com 10000' % (R7_LOG_TOKEN, msg)
-    subprocess.Popen(cmd, shell=True)
+    timed_msg = '%s: %s' % (_get_cur_time(),  msg)
+    print timed_msg
+    echo_file_cmd = 'echo "%s" >> /home/pi/slackbot.log' % timed_msg
+    subprocess.Popen(echo_file_cmd, shell=True)
+    log_cmd = 'echo %s %s | nc eu.data.logs.insight.rapid7.com 10000' % (R7_LOG_TOKEN, msg)
+    subprocess.Popen(log_cmd, shell=True)
 
 
 def load_config():
@@ -82,22 +87,29 @@ def process_message(slack_client, msg):
         post_message(slack_client, '```%s```' % stdout, channel)
         if stderr:
             post_message(slack_client, 'ERROR\n```%s```' % stderr, channel)
-    if txt.lower() == 'child inet on':
+    elif txt.lower() == 'child inet on':
         post_message(slack_client, 'turning on child inet....', channel)
         time.sleep(1)
         post_message(slack_client, 'turning on child inet....DONE', channel)
-    if txt.lower() == 'child inet off':
+    elif txt.lower() == 'child inet off':
         post_message(slack_client, 'turning off child inet....', channel)
         time.sleep(1)
         post_message(slack_client, 'turning off child inet....DONE', channel)
     elif txt.lower() == 'help':
         post_message(slack_client,
-                'Available commands:\n\tping\n\tstatus\n\tchild inet on\n\tchild inet off\n\thelp',
+                'Available commands:\n\tping\n\tstatus\n\tchild inet on\n\tchild inet off\n\tstop\n\thelp',
                 channel)
+    elif txt.lower() == 'stop':
+        _log('Stop command')
+        exit(0)
+    else:
+        _log(msg)
+        post_message(slack_client, '%s? U mad?' % msg, channel)
 
 
 
 slack_client = None
+iter = 0
 try:
     load_config()
 
@@ -110,6 +122,10 @@ try:
     slack_client = connect()
     allowed_user_ids = get_allowed_user_ids(slack_client)
     while True:
+        iter += 1
+        if iter > (5 * 60):
+            iter = 0
+            _log("Heartbeat")
         try:
             for msg in slack_client.rtm_read():
                 if msg['type'] != 'message'  and not "subtype" in msg:
@@ -117,12 +133,24 @@ try:
                 if msg['user'] not in allowed_user_ids:
                     continue
                 process_message(slack_client, msg)
+        except SlackConnectionError as sce:
+            _log('Slack connect socket error, reconnect in 15 sec, reason: "%s"' % sce)
+            time.sleep(15)
+            slack_client = connect()
+            if slack_client:
+                post_message(slack_client, 'Reconnect after exception\n```%s```' % sce, CUR_CHANNEL)
+                time.sleep(2)
+            else:
+                _log('Unable to connect to slack')
         except socket.error as se:
-            _log('Socket error, reconnect in 5 sec: %s' % se)
-            time.sleep(5)
-            connect()
-            post_message(slack_client, 'Reconnect after exception\n```%s```' % se, CUR_CHANNEL)
-            time.sleep(2)
+            _log('Socket error, reconnect in 15 sec, reason: "%s"' % se)
+            time.sleep(15)
+            slack_client = connect()
+            if slack_client:
+                post_message(slack_client, 'Reconnect after exception\n```%s```' % se, CUR_CHANNEL)
+                time.sleep(2)
+            else:
+                _log('Unable to connect to slack')
         except IOError as ex:
             _log('Cannot fetch messages: ' + ex)
             post_message(slack_client, 'Exception\n```%s```' % ex, CUR_CHANNEL)
