@@ -13,6 +13,8 @@ SLACK_API_TOKEN = None
 ALLOWED_USER_NAMES = None
 CUR_CHANNEL = None
 R7_LOG_TOKEN = None
+#INET_SERVICE = 'pihole-FTL'
+INET_SERVICE = 'bluetooth'
 
 
 def _get_cur_time():
@@ -68,6 +70,15 @@ def post_message(slack_client, text, channel):
         text=text, as_user=True)
 
 
+def run_command(cmd_str, channel):
+    ret = subprocess.Popen(cmd_str.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    stdout, stderr = ret.communicate()
+    if stdout:
+        post_message(slack_client, '```%s```' % stdout, channel)
+    if stderr:
+        post_message(slack_client, 'ERROR\n```%s```' % stderr, channel)
+
+
 def process_message(slack_client, msg):
     global CUR_CHANNEL
     if 'text' not in msg:
@@ -82,26 +93,23 @@ def process_message(slack_client, msg):
         _log(msg)
         post_message(slack_client, 'pong', channel)
     elif txt == 'status':
-        ret = subprocess.Popen(['route', '-n'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        stdout, stderr = ret.communicate()
-        post_message(slack_client, '```%s```' % stdout, channel)
-        if stderr:
-            post_message(slack_client, 'ERROR\n```%s```' % stderr, channel)
+        run_command('sudo service %s status' % INET_SERVICE, channel)
     elif txt.lower() == 'child inet on':
         post_message(slack_client, 'turning on child inet....', channel)
-        time.sleep(1)
+        run_command('sudo service %s start' % INET_SERVICE, channel)
         post_message(slack_client, 'turning on child inet....DONE', channel)
     elif txt.lower() == 'child inet off':
         post_message(slack_client, 'turning off child inet....', channel)
-        time.sleep(1)
+        run_command('sudo service %s stop' % INET_SERVICE, channel)
         post_message(slack_client, 'turning off child inet....DONE', channel)
+    elif txt.lower() == 'stop':
+        post_message(slack_client, 'Bye bye master', channel)
+        _log('Stop command')
+        exit(0)
     elif txt.lower() == 'help':
         post_message(slack_client,
                 'Available commands:\n\tping\n\tstatus\n\tchild inet on\n\tchild inet off\n\tstop\n\thelp',
                 channel)
-    elif txt.lower() == 'stop':
-        _log('Stop command')
-        exit(0)
     else:
         _log(msg)
         post_message(slack_client, '%s? U mad?' % msg, channel)
@@ -152,7 +160,7 @@ try:
             else:
                 _log('Unable to connect to slack')
         except IOError as ex:
-            _log('Cannot fetch messages: ' + ex)
+            _log('Cannot fetch messages: %s' % ex)
             post_message(slack_client, 'Exception\n```%s```' % ex, CUR_CHANNEL)
             time.sleep(2)
         time.sleep(1)
