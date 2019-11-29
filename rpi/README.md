@@ -81,3 +81,18 @@ https://github.com/vitorverasm/slackbot-iot
     "r7_log_token": "11111111-2222-3333-4444-555555555555",
 }
 ```
+
+# Pi-Hole
+
+Installation instructions: https://blog.cryptoaustralia.org.au/instructions-for-setting-up-pi-hole/
+
+## Installation
+```
+curl -sSL https://install.pi-hole.net | bash
+```
+
+## Check version
+executable: `/etc/.pihole/pihole -v`
+
+## Black lists
+https://gist.github.com/nkavadias/a039fde5722c4a775142dc6fe8c43391
