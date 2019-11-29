@@ -10,11 +10,11 @@ from slackclient.server import SlackConnectionError
 
 
 SLACK_API_TOKEN = None
-ALLOWED_USER_NAMES = None
+ALLOWED_USER_NAMES = []
+CONTROLLED_IPS = []
 CUR_CHANNEL = None
 R7_LOG_TOKEN = None
-#INET_SERVICE = 'pihole-FTL'
-INET_SERVICE = 'bluetooth'
+DNS_SERVICE = 'pihole-FTL'
 
 
 def _get_cur_time():
@@ -34,11 +34,14 @@ def load_config():
     global SLACK_API_TOKEN
     global ALLOWED_USER_NAMES
     global R7_LOG_TOKEN
+    global CONTROLLED_IPS
     _log('Load config from config.json file')
     with open('/home/pi/.bot.config.json') as config_file:
         config_loaded = json.load(config_file)
         SLACK_API_TOKEN = config_loaded['slack_api_token']
         ALLOWED_USER_NAMES = config_loaded['allowed_user_names']
+        CONTROLLED_IPS = config_loaded['controlled_ips']
+        print 'Controlled IPs', CONTROLLED_IPS
         R7_LOG_TOKEN = config_loaded['r7_log_token']
 
 
@@ -93,15 +96,17 @@ def process_message(slack_client, msg):
         _log(msg)
         post_message(slack_client, 'pong', channel)
     elif txt == 'status':
-        run_command('sudo service %s status' % INET_SERVICE, channel)
+        run_command('sudo service %s status' % DNS_SERVICE, channel)
     elif txt.lower() == 'child inet on':
-        post_message(slack_client, 'turning on child inet....', channel)
-        run_command('sudo service %s start' % INET_SERVICE, channel)
-        post_message(slack_client, 'turning on child inet....DONE', channel)
+        for ip in  CONTROLLED_IPS:
+            post_message(slack_client, 'turning on child inet at %s....' % ip, channel)
+            run_command('sudo iptables -D INPUT -s %s -j DROP' % ip, channel)
+            post_message(slack_client, 'turning on child inet at %s....DONE' % ip, channel)
     elif txt.lower() == 'child inet off':
-        post_message(slack_client, 'turning off child inet....', channel)
-        run_command('sudo service %s stop' % INET_SERVICE, channel)
-        post_message(slack_client, 'turning off child inet....DONE', channel)
+        for ip in  CONTROLLED_IPS:
+            post_message(slack_client, 'turning off child inet at %s....' % ip, channel)
+            run_command('sudo iptables -A INPUT -s %s -j DROP' % ip, channel)
+            post_message(slack_client, 'turning off child inet at %s....DONE' % ip, channel)
     elif txt.lower() == 'stop':
         post_message(slack_client, 'Bye bye master', channel)
         _log('Stop command')

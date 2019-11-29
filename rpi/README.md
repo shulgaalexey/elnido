@@ -96,3 +96,14 @@ executable: `/etc/.pihole/pihole -v`
 
 ## Black lists
 https://gist.github.com/nkavadias/a039fde5722c4a775142dc6fe8c43391
+
+
+# Turn on and off traffic from devices
+OFF
+```
+sudo iptables -D INPUT -s 192.168.1.9 -j DROP
+```
+ON
+```
+sudo iptables -D INPUT -s 192.168.1.9 -j DROP
+```
