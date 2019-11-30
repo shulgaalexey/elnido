@@ -145,6 +145,12 @@ def process_message(slack_client, msg):
             post_message(slack_client, 'turning off child inet for `%s`....' % ip['alias'], channel)
             run_command('sudo iptables -A INPUT -s %s -j DROP' % ip['ip'], channel)
             post_message(slack_client, 'turning off child inet for `%s`....DONE' % ip['alias'], channel)
+    elif txt.lower() == 'net':
+        net = '```'
+        for ip in  CONTROLLED_IPS:
+            net += '\n%s (%s)' % (ip['alias'], ip['ip'])
+        net += '```'
+        post_message(slack_client, net, channel)
     elif txt.lower() == 'admin':
         post_message(slack_client, 'http://192.168.1.8/admin/index.php', channel)
     elif txt.lower() == 'stop':
@@ -153,18 +159,18 @@ def process_message(slack_client, msg):
         exit(0)
     elif txt.lower() == 'help':
         cmds = [
-                'ping',
-                'status',
-                'child inet on',
-                'child inet off',
-                'admin',
-                'stop',
-                'help',
+                '`ping` to get pong',
+                '`status` to get current network status',
+                '`child inet on` to turn on the inernet on controlled devies',
+                '`child inet off` to turn off the internet on controlled devices',
+                '`net` to get controlled device list',
+                '`admin` to get admin page link',
+                '`stop` to kill the bot',
+                '`help` to get this message',
                 ]
-        cmds_help = 'Available commands:```'
+        cmds_help = 'Available commands:'
         for c in cmds:
             cmds_help += '\n\t%s' % c
-        cmds_help += '```'
         post_message(slack_client, cmds_help, channel)
     else:
         _log(msg)
