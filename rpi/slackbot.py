@@ -1,8 +1,10 @@
 import json
 import time
 import subprocess
+import threading
 import datetime
 import socket
+from timeit import Timer
 #from r7insight import R7InsightHandler
 #import logging
 from slackclient import SlackClient
@@ -73,13 +75,44 @@ def post_message(slack_client, text, channel):
         text=text, as_user=True)
 
 
+class Command(object):
+    def __init__(self, cmd, timeout):
+        self.cmd = cmd
+        self.process = None
+        self.timeout = timeout
+        self.stdout = None
+        self.stderr = None
+
+    def run(self):
+        print 'Run command: %s' % self.cmd
+        print 'Timeout: %s' % self.timeout
+        def target():
+            self.process = subprocess.Popen(self.cmd.split(),
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            self.stdout, self.stderr = self.process.communicate()
+
+        thread = threading.Thread(target=target)
+        thread.start()
+
+        thread.join(self.timeout)
+        if thread.is_alive():
+            self.process.terminate()
+            thread.join()
+
+
 def run_command(cmd_str, channel):
-    ret = subprocess.Popen(cmd_str.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdout, stderr = ret.communicate()
-    if stdout:
-        post_message(slack_client, '```%s```' % stdout, channel)
-    if stderr:
-        post_message(slack_client, 'ERROR\n```%s```' % stderr, channel)
+    command = Command(cmd_str, timeout=15)
+    command.run()
+    if command.stdout:
+        post_message(slack_client, '```%s```' % command.stdout, channel)
+    if command.stderr:
+        post_message(slack_client, 'ERROR\n```%s```' % command.stderr, channel)
+
+
+def check_ip_reachable(ip):
+    command = Command('ping %s' % ip, timeout=5)
+    command.run()
+    return command.stdout and 'bytes from' in command.stdout
 
 
 def process_message(slack_client, msg):
@@ -96,17 +129,21 @@ def process_message(slack_client, msg):
         _log(msg)
         post_message(slack_client, 'pong', channel)
     elif txt == 'status':
-        run_command('sudo service %s status' % DNS_SERVICE, channel)
+        for ip in  CONTROLLED_IPS:
+            post_message(slack_client, 'checking %s....' % ip['alias'], channel)
+            check = check_ip_reachable(ip['ip'])
+            reachable = 'reachable' if check else 'not reachable'
+            post_message(slack_client, '%s' % reachable, channel)
     elif txt.lower() == 'child inet on':
         for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'turning on child inet at %s....' % ip, channel)
-            run_command('sudo iptables -D INPUT -s %s -j DROP' % ip, channel)
-            post_message(slack_client, 'turning on child inet at %s....DONE' % ip, channel)
+            post_message(slack_client, 'turning on child inet for %s....' % ip['alias'], channel)
+            run_command('sudo iptables -D INPUT -s %s -j DROP' % ip['ip'], channel)
+            post_message(slack_client, 'turning on child inet for %s....DONE' % ip['alias'], channel)
     elif txt.lower() == 'child inet off':
         for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'turning off child inet at %s....' % ip, channel)
-            run_command('sudo iptables -A INPUT -s %s -j DROP' % ip, channel)
-            post_message(slack_client, 'turning off child inet at %s....DONE' % ip, channel)
+            post_message(slack_client, 'turning off child inet for %s....' % ip['alias'], channel)
+            run_command('sudo iptables -A INPUT -s %s -j DROP' % ip['ip'], channel)
+            post_message(slack_client, 'turning off child inet for %s....DONE' % ip['alias'], channel)
     elif txt.lower() == 'stop':
         post_message(slack_client, 'Bye bye master', channel)
         _log('Stop command')
@@ -117,7 +154,7 @@ def process_message(slack_client, msg):
                 channel)
     else:
         _log(msg)
-        post_message(slack_client, '%s? U mad?' % msg, channel)
+        post_message(slack_client, '```%s```\nU mad?' % msg, channel)
 
 
 
