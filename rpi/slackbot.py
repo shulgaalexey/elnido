@@ -129,29 +129,43 @@ def process_message(slack_client, msg):
         _log(msg)
         post_message(slack_client, 'pong', channel)
     elif txt == 'status':
+        run_command('sudo service %s status' % DNS_SERVICE, channel)
         for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'checking %s....' % ip['alias'], channel)
+            post_message(slack_client, 'checking `%s`....' % ip['alias'], channel)
             check = check_ip_reachable(ip['ip'])
             reachable = 'reachable' if check else 'not reachable'
-            post_message(slack_client, '%s' % reachable, channel)
+            post_message(slack_client, 'checking `%s`....%s' % (ip['alias'], reachable), channel)
     elif txt.lower() == 'child inet on':
         for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'turning on child inet for %s....' % ip['alias'], channel)
+            post_message(slack_client, 'turning on child inet for `%s`....' % ip['alias'], channel)
             run_command('sudo iptables -D INPUT -s %s -j DROP' % ip['ip'], channel)
-            post_message(slack_client, 'turning on child inet for %s....DONE' % ip['alias'], channel)
+            post_message(slack_client, 'turning on child inet for `%s`....DONE' % ip['alias'], channel)
     elif txt.lower() == 'child inet off':
         for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'turning off child inet for %s....' % ip['alias'], channel)
+            post_message(slack_client, 'turning off child inet for `%s`....' % ip['alias'], channel)
             run_command('sudo iptables -A INPUT -s %s -j DROP' % ip['ip'], channel)
-            post_message(slack_client, 'turning off child inet for %s....DONE' % ip['alias'], channel)
+            post_message(slack_client, 'turning off child inet for `%s`....DONE' % ip['alias'], channel)
+    elif txt.lower() == 'admin':
+        post_message(slack_client, 'http://192.168.1.8/admin/index.php', channel)
     elif txt.lower() == 'stop':
         post_message(slack_client, 'Bye bye master', channel)
         _log('Stop command')
         exit(0)
     elif txt.lower() == 'help':
-        post_message(slack_client,
-                'Available commands:\n\tping\n\tstatus\n\tchild inet on\n\tchild inet off\n\tstop\n\thelp',
-                channel)
+        cmds = [
+                'ping',
+                'status',
+                'child inet on',
+                'child inet off',
+                'admin',
+                'stop',
+                'help',
+                ]
+        cmds_help = 'Available commands:```'
+        for c in cmds:
+            cmds_help += '\n\t%s' % c
+        cmds_help += '```'
+        post_message(slack_client, cmds_help, channel)
     else:
         _log(msg)
         post_message(slack_client, '```%s```\nU mad?' % msg, channel)
