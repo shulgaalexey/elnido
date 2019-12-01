@@ -4,5 +4,8 @@
     "controlled_ips": [
 		{"ip": "xx.xx.xx.xx", "alias": "notebook"},
 		{"ip": "yy.yy.yy.yy", "alias": "iPad"}
+	],
+    "other_ips": [
+		{"ip": "zz.zz.zz.zz", "alias": "computer"}
 	]
 }

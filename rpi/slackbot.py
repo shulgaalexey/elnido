@@ -14,6 +14,7 @@ from slackclient.server import SlackConnectionError
 SLACK_API_TOKEN = None
 ALLOWED_USER_NAMES = []
 CONTROLLED_IPS = []
+OTHER_IPS = []
 CUR_CHANNEL = None
 R7_LOG_TOKEN = None
 DNS_SERVICE = 'pihole-FTL'
@@ -37,13 +38,14 @@ def load_config():
     global ALLOWED_USER_NAMES
     global R7_LOG_TOKEN
     global CONTROLLED_IPS
+    global OTHER_IPS
     _log('Load config from config.json file')
     with open('/home/pi/.bot.config.json') as config_file:
         config_loaded = json.load(config_file)
         SLACK_API_TOKEN = config_loaded['slack_api_token']
         ALLOWED_USER_NAMES = config_loaded['allowed_user_names']
         CONTROLLED_IPS = config_loaded['controlled_ips']
-        print 'Controlled IPs', CONTROLLED_IPS
+        OTHER_IPS = config_loaded['other_ips']
         R7_LOG_TOKEN = config_loaded['r7_log_token']
 
 
@@ -130,25 +132,32 @@ def process_message(slack_client, msg):
         post_message(slack_client, 'pong', channel)
     elif txt == 'status':
         run_command('sudo service %s status' % DNS_SERVICE, channel)
-        for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'checking `%s`....' % ip['alias'], channel)
+        post_message(slack_client, 'Run nmap...', channel)
+        run_command('nmap -sn 192.168.1.0/24', channel)
+        post_message(slack_client, 'Checking status of devices...', channel)
+        for ip in  (CONTROLLED_IPS + OTHER_IPS):
+            #post_message(slack_client, 'checking `%s`....' % ip['alias'], channel)
             check = check_ip_reachable(ip['ip'])
             reachable = 'reachable' if check else 'not reachable'
-            post_message(slack_client, 'checking `%s`....%s' % (ip['alias'], reachable), channel)
+            post_message(slack_client, '`%s` at %s - %s' % (ip['alias'], ip['ip'], reachable), channel)
+        post_message(slack_client, 'Status check complete', channel)
     elif txt.lower() == 'child inet on':
         for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'turning on child inet for `%s`....' % ip['alias'], channel)
+            #post_message(slack_client, 'turning on child inet for `%s`....' % ip['alias'], channel)
             run_command('sudo iptables -D INPUT -s %s -j DROP' % ip['ip'], channel)
-            post_message(slack_client, 'turning on child inet for `%s`....DONE' % ip['alias'], channel)
+            post_message(slack_client, 'turning on child inet for `%s` - DONE' % ip['alias'], channel)
     elif txt.lower() == 'child inet off':
         for ip in  CONTROLLED_IPS:
-            post_message(slack_client, 'turning off child inet for `%s`....' % ip['alias'], channel)
+            #post_message(slack_client, 'turning off child inet for `%s`....' % ip['alias'], channel)
             run_command('sudo iptables -A INPUT -s %s -j DROP' % ip['ip'], channel)
-            post_message(slack_client, 'turning off child inet for `%s`....DONE' % ip['alias'], channel)
+            post_message(slack_client, 'turning off child inet for `%s` - DONE' % ip['alias'], channel)
     elif txt.lower() == 'net':
-        net = '```'
+        net = '```Controlled:'
         for ip in  CONTROLLED_IPS:
-            net += '\n%s (%s)' % (ip['alias'], ip['ip'])
+            net += '\n\t%s (%s)' % (ip['alias'], ip['ip'])
+        net += '\nViewed:'
+        for ip in  OTHER_IPS:
+            net += '\n\t%s (%s)' % (ip['alias'], ip['ip'])
         net += '```'
         post_message(slack_client, net, channel)
     elif txt.lower() == 'admin':
