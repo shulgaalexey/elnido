@@ -114,3 +114,14 @@ ON
 ```
 sudo iptables -D INPUT -s 192.168.1.9 -j DROP
 ```
+
+# Reboot to restart the bot
+
+Cron task is used:
+
+```
+sudo crontab -e
+@reboot /home/pi/elnido/rpi/start.sh
+```
+
+https://kvz.io/schedule-tasks-on-linux-using-crontab.html
