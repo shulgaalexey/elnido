@@ -15,3 +15,7 @@ Secure home network
 | admin         | URL          | Get admin page link |
 | stop          |              | Kill the bot |
 | help          | list of command names | Get the list of available commands |
+
+## Feature request
+
+1. [ ] Turn inet on/off on schedule
