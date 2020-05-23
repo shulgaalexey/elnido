@@ -14,6 +14,70 @@
 
 https://dev.to/wiaio/set-up-a-raspberry-pi-without-an-external-monitor-or-keyboard--c88
 
+
+## RPI as a router - RaspAP
+
+Install raspbian, upgrade it:
+
+```
+sudo apt-get update
+sudo apt-mark hold wpasupplicant
+sudo apt dist-upgrade
+sudo reboot
+```
+
+Install RaspAP
+https://github.com/billz/raspap-webgui
+
+Patch: https://github.com/billz/raspap-webgui/issues/141#issuecomment-353804194
+
+```
+sudo apt-get install iptables-persistent
+
+sudo vim /etc/hostapd/hostapd.conf
+
+Comment out the driver if you are using rpi3 with wireless
+
+#driver=nl80211
+ctrl_interface=/var/run/hostapd
+ctrl_interface_group=0
+beacon_int=100
+auth_algs=1
+wpa_key_mgmt=WPA-PSK
+ssid=raspi-webgui
+channel=1
+hw_mode=g
+wpa_passphrase=ChangeMe
+interface=wlan0
+wpa=1
+wpa_pairwise=TKIP
+country_code=AF
+
+
+sudo vim /etc/default/hostapd
+DAEMON_CONF="/etc/hostapd/hostapd.conf"
+
+sudo vim /etc/sysctl.conf
+uncomment the line
+net.ipv4.ip_forward=1
+
+run this command to activate immediately
+sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
+
+Run the following commands to create the network translation between the ethernet port eth0 and the wifi port wlan0
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+
+To make this happen on reboot (so you don't have to type it every time) run 
+sudo sh -c "iptables-save > /etc/iptables/rules.v4"
+```
+
+
+
+-------------------------------------------------------------------
+
+
 ## RPi Parental Control
 
 sudo apt install iptables iptables-persistent hostapd dnsmasq squid3
