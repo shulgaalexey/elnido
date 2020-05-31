@@ -26,7 +26,7 @@ sudo apt dist-upgrade
 sudo reboot
 ```
 
-Install RaspAP
+### Install RaspAP
 https://github.com/billz/raspap-webgui
 
 Patch: https://github.com/billz/raspap-webgui/issues/141#issuecomment-353804194
@@ -73,7 +73,13 @@ To make this happen on reboot (so you don't have to type it every time) run
 sudo sh -c "iptables-save > /etc/iptables/rules.v4"
 ```
 
+### Control AP
 
+```
+admin/secret
+sudo systemctl status raspapd.service
+sudo systemctl restart lighttpd.service
+```
 
 -------------------------------------------------------------------
 
