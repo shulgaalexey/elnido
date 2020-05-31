@@ -119,9 +119,11 @@ def check_ip_reachable(ip):
 
 def process_message(slack_client, msg):
     global CUR_CHANNEL
-    if 'text' not in msg:
+    #if 'text' not in msg:
+    if 'content' not in msg:
         return
-    txt = msg['text']
+    #txt = msg['text']
+    txt = msg['content']
     _log(txt)
     if 'channel' not in msg:
         return
@@ -207,10 +209,12 @@ try:
             _log("Heartbeat")
         try:
             for msg in slack_client.rtm_read():
-                if msg['type'] != 'message'  and not "subtype" in msg:
+                _log(msg)
+                #if msg['type'] != 'message'  and not "subtype" in msg:
+                if msg['type'] != 'desktop_notification':
                     continue
-                if msg['user'] not in allowed_user_ids:
-                    continue
+                #if msg['user'] not in allowed_user_ids:
+                #    continue
                 process_message(slack_client, msg)
         except SlackConnectionError as sce:
             _log('Slack connect socket error, reconnect in 15 sec, reason: "%s"' % sce)
